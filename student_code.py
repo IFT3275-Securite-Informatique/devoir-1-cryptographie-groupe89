@@ -3,10 +3,9 @@ from collections import Counter
 import random
 
 def decrypt(C):
+    C = getEightBitString(C)
     cypherSymbolFrequency = getFrequency(C)
-    decypheredText = hill_climb(sorted_combined_frequencies, cypherSymbolFrequency, M)
-    print(decypheredText)
-    return decypheredText
+    return print(hill_climb(sorted_combined_frequencies, cypherSymbolFrequency, M, C))
 
 def cut_string_into_pairs(text):
     pairs = []
@@ -36,45 +35,56 @@ def getFrequency(cypher):
     return ratio
 
 
-def apply_key(key):
+def apply_key(key, C):
+    print(C)
     reversed_key = {v: k for k, v in key.items()}
     decrypted_characters = []
     for symbol in C:
-        mapped_char = reversed_key.get(symbol, '?')
+        mapped_char = reversed_key.get(symbol, '?')  # Retrieve the mapped character, or '?' if not found
+        # Debug: Print each symbol and its corresponding mapped character
         decrypted_characters.append(mapped_char)
-    decrypted_text = ''.join(decrypted_characters)
+    decrypted_text = ''.join(decrypted_characters)  # Concatenate all characters
     return decrypted_text
 
 
 def score(decypher, corpus):
+    # Split the deciphered text into words by whitespace
     words_in_text = decypher.split()
     
+    # Initialize the score
     score = 0
 
+    # Check each word in the decyphered text
     for word in words_in_text:
+        # Increment score if the word exists in the French dictionary
         if word.lower() in corpus:
             score += 1
 
     return score
 
 
-def hill_climb(frequencies, cypherSymbols,corpus, iterations=100000):
+def hill_climb(frequencies, cypherSymbols,corpus, C, iterations=100000):
     symbols = [symbol for symbol, _ in frequencies]
     cypherSymbols_sorted = [symbol for symbol, _ in cypherSymbols]
     best_key = dict(zip(symbols, cypherSymbols_sorted))
-    best_score = score(apply_key(best_key), corpus)
+    best_score = score(apply_key(best_key, C), corpus)
     for i in range(iterations):
         new_key = best_key.copy()
+        # Randomly select two symbols for swapping
         s1, s2 = random.sample(symbols, 2)
+        # Swap values in new_key if both symbols exist in new_key
         if s1 in new_key and s2 in new_key:
             new_key[s1], new_key[s2] = new_key[s2], new_key[s1]
-            decypher = apply_key(new_key)
+            # Apply the new key to the cipher and calculate the score
+            decypher = apply_key(new_key, C)
             current_score = score(decypher, corpus)
+            # If the new key improves the score, update best_key and best_score
             if current_score > best_score:
                 best_key, best_score = new_key, current_score
                 print(f"New best score: {best_score}")
 
-    deciphered_text = ''.join(apply_key( best_key))
+    # Return the deciphered text by applying the best key to the cipher
+    deciphered_text = ''.join(apply_key( best_key, C))
     return deciphered_text
 
 urls = [
@@ -150,8 +160,4 @@ def chiffrer(M, K):
     l = [K[x] for x in l]
     return ''.join(l)
 
-K = gen_key(symboles)
-M = text[2000:2200]
-C = chiffrer(M, K)
-C = getEightBitString(C)
-
+M = text[2000:10000]
